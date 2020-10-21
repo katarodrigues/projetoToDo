@@ -120,7 +120,7 @@ def export_list(request):
     worksheet = workbook.active
     worksheet.title = 'Tarefas'
 
-       columns = [
+    columns = [
         'ID',
         'Tarefa',
         'Descrição',
