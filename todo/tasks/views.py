@@ -7,6 +7,10 @@ from .models import Task
 from django.contrib import messages
 import datetime
 
+from datetime import timedelta
+from openpyxl import Workbook
+from django.http import HttpResponse
+
 # Create your views here.
 
 @login_required
@@ -100,3 +104,56 @@ def helloWorld(request):
 
 def yourName(request, name):
     return render(request, 'tasks/yourname.html', {'name': name})
+
+#exportar
+
+@login_required
+def export_list(request):
+    tasks_queryset= Task.objects.all()
+    response = HttpResponse(
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    )
+    response['Content-Disposition'] = 'attachment; filename={date}-lista-tarefas.xlsx'.format(
+        date=datetime.now().strftime('%Y-%m-%d'),
+    )
+    workbook = Workbook()
+    worksheet = workbook.active
+    worksheet.title = 'Tarefas'
+
+       columns = [
+        'ID',
+        'Tarefa',
+        'Descrição',
+        'Estado',
+        'Data_Criação',
+        'Data_Atualização',
+    ]
+    row_num = 1
+
+# Assign the titles for each cell of the header
+    for col_num, column_title in enumerate(columns, 1):
+        cell = worksheet.cell(row=row_num, column=col_num)
+        cell.value = column_title
+
+ # Iterate through all movies
+    for task in tasks_queryset:
+        row_num += 1
+        
+        # Define the data for each cell in the row 
+        row = [
+            task.pk,
+            task.title,
+            task.description,
+            task.done,
+            task.created_at,
+            task.updated_at,
+        ]
+        
+        # Assign the data for each cell of the row 
+        for col_num, cell_value in enumerate(row, 1):
+            cell = worksheet.cell(row=row_num, column=col_num)
+            cell.value = cell_value
+
+    workbook.save(response)
+
+    return response
